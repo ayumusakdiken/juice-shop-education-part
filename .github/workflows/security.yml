@@ -31,7 +31,12 @@ jobs:
     - name: semgrep
       uses: semgrep/semgrep-action@v1
 
-      
+    - name: login
+      uses: semgrep login
+
+    - name: ci
+      uses: semgrep ci
+
 
       
 
