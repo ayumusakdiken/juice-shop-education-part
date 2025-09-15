@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout the code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: semgrep
       uses: semgrep/semgrep-action@v1
@@ -49,5 +49,12 @@ jobs:
       uses: semgrep ci
 
 
-      
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout the code
+      uses: actions/checkout@v4
+
+    - uses: gitleaks/gitleaks-action@v2
+
 
