@@ -44,18 +44,26 @@ jobs:
 
 
 
-  Anchore-Build-Scan:
-    permissions:
-      contents: write # required to upload to the Dependency submission API
+  security-scan:
     runs-on: ubuntu-latest
+
     steps:
-    - name: Checkout the code
-      uses: actions/checkout@v4
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag localbuild/testimage:latest
-    - name: Scan the image and upload dependency results
-      uses: anchore/sbom-action@bb716408e75840bbb01e839347cd213767269d4a
+    - name: Install Syft
+      run: |
+        curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+    - name: Install Grype
+      run: |
+        curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+
+    - name: Generate SBOM for Docker Hub Image with Syft
+      run: syft docker:ayumusakdiken/juice-shop -o cyclonedx-json > juice-shop-sbom.json
+
+    - name: Scan SBOM with Grype
+      run: grype sbom:juice-shop-sbom.json -o json > grype-sbom-scan.json
+
+    - name: Upload SBOM and Scan Results as Artifacts
+      uses: actions/upload-artifact@v3
       with:
-        image: "localbuild/testimage:latest"
-        artifact-name: image.spdx.json
-        dependency-snapshot: true
+        name: Reports
+        path: |
+          juice-shop-sbom.json
