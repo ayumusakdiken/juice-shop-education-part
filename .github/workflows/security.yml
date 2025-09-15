@@ -1,69 +1,37 @@
+name: pipeline
+
 name: Anchore Syft SBOM scan
 
 on:
   push:
     branches: [ "master" ]
 
-permissions:
-  contents: write
-
 jobs:
-  Anchore-Build-Scan:
-    permissions:
-      contents: write  # required to upload to the Dependency submission API
+  syft:
+    name: Build & SBOM
     runs-on: ubuntu-latest
     steps:
     - name: Checkout the code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v3
 
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v3
+    - name: Buld docker
+      uses: docker build -t juice-shop:${{github.sha}} .
+
+    - name: Syft SBOM Scanuses:
+      uses: anchore/sbom-action@v0
       with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+        image: "juice-shop:${{github.sha}}"
+        output-file: "sbom.spdx.json"
+        format: "spdx-json"
 
-    - name: Build the Docker image
-      run: |
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/my-image:latest .
-
-    - name: Push the image to Docker Hub
-      run: |
-        docker push ${{ secrets.DOCKER_USERNAME }}/my-image:latest
-
-  security-scan:
-    needs: Anchore-Build-Scan  # Ensures this job runs only after the build job completes
-    runs-on: ubuntu-latest
-
-    steps:
+  sem-grep:
     - name: Checkout the code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v3
 
-    - name: Log in to Docker Hub (for syft/grype)
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: semgrep
+      uses: semgrep/semgrep-action@v1
 
-    - name: Install Syft
-      run: |
-        curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+      
 
-    - name: Install Grype
-      run: |
-        curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+      
 
-    - name: Generate SBOM for Docker Hub Image with Syft
-      run: |
-        syft ${{ secrets.DOCKER_USERNAME }}/my-image:latest -o cyclonedx-json > juice-shop-sbom.json
-
-    - name: Scan SBOM with Grype
-      run: |
-        grype sbom:juice-shop-sbom.json -o json > grype-sbom-scan.json
-
-    - name: Upload SBOM and Scan Results as Artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: Reports
-        path: |
-          juice-shop-sbom.json
-          grype-sbom-scan.json
