@@ -17,7 +17,7 @@ jobs:
     - name: Buld docker
       uses: docker build -t juice-shop:${{github.sha}} .
 
-    - name: Syft SBOM Scanuses:
+    - name: Syft SBOM Scanuses
       uses: anchore/sbom-action@v0
       with:
         image: "juice-shop:${{github.sha}}"
