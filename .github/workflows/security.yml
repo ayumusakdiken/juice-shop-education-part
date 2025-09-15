@@ -1,7 +1,5 @@
 name: security
 
-name: Anchore Syft SBOM scan
-
 on:
   push:
     branches: [ "master" ]
