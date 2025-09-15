@@ -29,14 +29,13 @@ jobs:
     - name: Checkout the code
       uses: actions/checkout@v4
 
-    - name: semgrep
+    - name: Semgrep (SAST) (Static Application Security Testing)
       uses: semgrep/semgrep-action@v1
-
-    - name: login
-      run: semgrep login
-
-    - name: ci
-      run: semgrep ci
+      run: |
+        semgrep \
+          --sarif --output report.sarif \
+          --metrics=off \
+          --config="p/default"
 
 
   gitleaks:
